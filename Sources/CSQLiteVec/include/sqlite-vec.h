@@ -4,7 +4,7 @@
 #include "sqlite3ext.h"
 
 #define SQLITE_VEC_VERSION "v0.1.1"
-#define SQLITE_VEC_DATE "2024-08-09T14:46:22Z+0200"
+#define SQLITE_VEC_DATE "2024-08-06T00:12:49Z+0000"
 #define SQLITE_VEC_SOURCE "ad11d46221470449f91c4b51a4e44b4bafe4569b"
 
 #ifdef __cplusplus
@@ -14,7 +14,6 @@ extern "C" {
 #ifdef _WIN32
 __declspec(dllexport)
 #endif
-
 int sqlite3_vec_init(sqlite3 *db, char **pzErrMsg,
                   const sqlite3_api_routines *pApi);
 
