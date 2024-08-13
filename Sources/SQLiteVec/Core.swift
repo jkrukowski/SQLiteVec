@@ -6,3 +6,6 @@ public func initialize() throws {
         CSQLiteVec.core_vec_init()
     )
 }
+
+let SQLITE_STATIC = unsafeBitCast(0, to: sqlite3_destructor_type.self)
+let SQLITE_TRANSIENT = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
