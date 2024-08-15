@@ -71,16 +71,26 @@ let result = try await db.query(
 print(result)
 ```
 
-It should print the following result
+It should print the following result:
 
 ```bash
-[["distance": 0.0, "rowid": 3], ["rowid": 4, "distance": 0.19999998807907104], ["distance": 0.20000001788139343, "rowid": 2]]
+[
+    ["distance": 0.0, "rowid": 3],
+    ["distance": 0.19999998807907104, "rowid": 4],
+    ["distance": 0.20000001788139343, "rowid": 2]
+]
 ```
 
 ## Testing
 
 ```bash
 $ swift test
+```
+
+To test it on docker swift image run:
+
+```bash
+$ docker build -f DOCKERFILE -t linuxbuild . && docker run linuxbuild
 ```
 
 ## Acknowledgements

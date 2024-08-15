@@ -3,6 +3,6 @@ import XCTest
 
 final class CoreTests: XCTestCase {
     func testInitialize() throws {
-        try XCTAssertNoThrow(SQLiteVec.initialize())
+        try XCTAssertNoThrow(SQLiteVec.initialize(), "Initializing should not throw")
     }
 }

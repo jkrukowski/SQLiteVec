@@ -16,6 +16,30 @@ public actor Database {
         )
     }
 
+    public func version() -> String? {
+        do {
+            let result = try query("SELECT vec_version() as version")
+            guard let first = result.first, let value = first["version"] as? String else {
+                return nil
+            }
+            return value
+        } catch {
+            return nil
+        }
+    }
+
+    public func buildInfo() -> String? {
+        do {
+            let result = try query("SELECT vec_debug() as info")
+            guard let first = result.first, let value = first["info"] as? String else {
+                return nil
+            }
+            return value
+        } catch {
+            return nil
+        }
+    }
+
     public func execute(_ sql: String, params: [Any] = []) throws {
         let stmt = try prepare(sql, params: params)
         try execute(stmt)
