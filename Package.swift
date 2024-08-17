@@ -10,6 +10,10 @@ let package = Package(
             name: "SQLiteVecCLI",
             targets: ["SQLiteVecCLI"]
         ),
+        .library(
+            name: "SQLiteVec",
+            targets: ["SQLiteVec"]
+        ),
     ],
     targets: [
         .executableTarget(
