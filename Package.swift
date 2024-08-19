@@ -5,9 +5,6 @@ import PackageDescription
 
 let package = Package(
     name: "SQLiteVec",
-    platforms: [
-        .iOS(.v16)
-    ],
     products: [
         .executable(
             name: "SQLiteVecCLI",
@@ -16,6 +13,10 @@ let package = Package(
         .library(
             name: "SQLiteVec",
             targets: ["SQLiteVec"]
+        ),
+        .library(
+            name: "CSQLiteVec",
+            targets: ["CSQLiteVec"]
         ),
     ],
     targets: [
