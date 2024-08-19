@@ -90,7 +90,7 @@ $ swift test
 To test it on docker swift image run:
 
 ```bash
-$ docker build -f DOCKERFILE -t linuxbuild . && docker run linuxbuild
+$ docker build -f Dockerfile -t linuxbuild . && docker run linuxbuild
 ```
 
 ## Acknowledgements

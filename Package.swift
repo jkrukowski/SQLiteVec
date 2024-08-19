@@ -37,7 +37,10 @@ let package = Package(
         ),
         .target(
             name: "CSQLiteVec",
-            publicHeadersPath: "include"
+            publicHeadersPath: "include",
+            cSettings: [
+                .unsafeFlags(["-w"]),
+            ]
         ),
         .testTarget(
             name: "SQLiteVecTests",
