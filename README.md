@@ -1,5 +1,8 @@
 # SQLiteVec
 
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fjkrukowski%2FSQLiteVec%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/jkrukowski/SQLiteVec)
+[![](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fjkrukowski%2FSQLiteVec%2Fbadge%3Ftype%3Dplatforms)](https://swiftpackageindex.com/jkrukowski/SQLiteVec)
+
 Swift bindings for [sqlite-vec](https://github.com/asg017/sqlite-vec)
 
 ## Installation
@@ -12,7 +15,7 @@ The [Swift Package Manager](https://www.swift.org/documentation/package-manager/
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/jkrukowski/SQLiteVec", from: "0.0.2")
+    .package(url: "https://github.com/jkrukowski/SQLiteVec", from: "0.0.4")
 ]
 ```
 
