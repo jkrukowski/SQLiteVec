@@ -53,7 +53,8 @@ public actor Database {
     private func prepare(_ sql: String, params: [Any]) throws -> OpaquePointer {
         var stmt: OpaquePointer?
         try SQLiteVecError.check(
-            sqlite3_prepare_v2(_handle, sql, -1, &stmt, nil)
+            sqlite3_prepare_v2(_handle, sql, -1, &stmt, nil),
+            _handle
         )
         let paramCount = Int(sqlite3_bind_parameter_count(stmt))
         guard paramCount == params.count else {
@@ -78,7 +79,7 @@ public actor Database {
             default:
                 result = sqlite3_bind_null(stmt, Int32(index + 1))
             }
-            try SQLiteVecError.check(result)
+            try SQLiteVecError.check(result, _handle)
         }
         return stmt!
     }

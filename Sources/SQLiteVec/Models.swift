@@ -3,20 +3,48 @@ import Foundation
 
 struct SQLiteVecError: Error {
     let code: Int32
+    let message: String?
 
-    init(code: Int32) {
+    init(code: Int32, message: String?) {
         self.code = code
+        self.message = message
+    }
+}
+
+extension SQLiteVecError: CustomStringConvertible {
+    var description: String {
+        if let message {
+            "Error \(code): \(message)"
+        } else {
+            "Error \(code)"
+        }
+    }
+}
+
+extension SQLiteVecError: CustomDebugStringConvertible {
+    var debugDescription: String {
+        description
     }
 }
 
 extension SQLiteVecError {
     static let successCodes: Set = [SQLITE_OK, SQLITE_ROW, SQLITE_DONE]
 
-    static func check(_ code: Int32) throws {
+    static func check(_ code: Int32, _ handle: OpaquePointer? = nil) throws {
         if successCodes.contains(code) {
             return
         }
-        throw SQLiteVecError(code: code)
+        let message: String? =
+            if let handle {
+                String(cString: sqlite3_errmsg(handle))
+            } else {
+                nil
+            }
+        throw SQLiteVecError(code: code, message: message)
+    }
+
+    static func message(_ handle: OpaquePointer) -> String {
+        String(cString: sqlite3_errmsg(handle))
     }
 }
 

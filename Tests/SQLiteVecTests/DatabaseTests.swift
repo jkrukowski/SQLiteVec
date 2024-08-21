@@ -36,6 +36,33 @@ final class DatabaseTests: XCTestCase {
         XCTAssertEqual(result[0]["name"] as? String, "Jane")
     }
 
+    func testSubQuery() async throws {
+        let db = try Database(.inMemory)
+        try await db.execute("""
+            CREATE TABLE users (
+                id INTEGER PRIMARY KEY,
+                name TEXT NOT NULL UNIQUE
+            )
+            """
+        )
+        try await db.execute("INSERT INTO users(id, name) VALUES (?, ?)", params: [1, "John"])
+        try await db.execute("INSERT INTO users(id, name) VALUES (?, ?)", params: [2, "Jane"])
+        try await db.execute("INSERT INTO users(id, name) VALUES (?, ?)", params: [3, "Jim"])
+
+        let result = try await db.query(
+            """
+                SELECT * FROM (
+                    SELECT * FROM users
+                    WHERE name LIKE 'J%'
+                ) as sub WHERE sub.id = ?
+            """,
+            params: [2]
+        )
+        XCTAssertEqual(result.count, 1)
+        XCTAssertEqual(result[0]["id"] as? Int, 2)
+        XCTAssertEqual(result[0]["name"] as? String, "Jane")
+    }
+
     func testQuantizeBinary() async throws {
         let db = try Database(.inMemory)
         let result = try await db.query(
@@ -103,7 +130,7 @@ final class DatabaseTests: XCTestCase {
         for row in data {
             try await db.execute(
                 """
-                    INSERT INTO vec_items(rowid, embedding) 
+                    INSERT INTO vec_items(rowid, embedding)
                     VALUES (?, ?)
                 """,
                 params: [row.index, row.vector]
@@ -111,10 +138,10 @@ final class DatabaseTests: XCTestCase {
         }
         let result = try await db.query(
             """
-                SELECT rowid, distance 
-                FROM vec_items 
-                WHERE embedding MATCH ? 
-                ORDER BY distance 
+                SELECT rowid, distance
+                FROM vec_items
+                WHERE embedding MATCH ?
+                ORDER BY distance
                 LIMIT 3
             """,
             params: [query]

@@ -15,7 +15,7 @@ The [Swift Package Manager](https://www.swift.org/documentation/package-manager/
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/jkrukowski/SQLiteVec", from: "0.0.4")
+    .package(url: "https://github.com/jkrukowski/SQLiteVec", from: "0.0.5")
 ]
 ```
 
@@ -51,9 +51,9 @@ try await db.execute("CREATE VIRTUAL TABLE vec_items USING vec0(embedding float[
 for row in data {
     try await db.execute(
         """
-            INSERT INTO vec_items(rowid, embedding) 
+            INSERT INTO vec_items(rowid, embedding)
             VALUES (?, ?)
-        """, 
+        """,
         params: [row.index, row.vector]
     )
 }
@@ -61,10 +61,10 @@ for row in data {
 // query the embeddings
 let result = try await db.query(
     """
-        SELECT rowid, distance 
-        FROM vec_items 
-        WHERE embedding MATCH ? 
-        ORDER BY distance 
+        SELECT rowid, distance
+        FROM vec_items
+        WHERE embedding MATCH ?
+        ORDER BY distance
         LIMIT 3
     """,
     params: [query]
