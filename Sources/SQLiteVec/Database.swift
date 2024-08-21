@@ -1,9 +1,89 @@
 import CSQLiteVec
 import Foundation
 
+/// A class representing a SQLite database with vectorization capabilities.
+///
+/// The `Database` class provides an interface to interact with a SQLite database,
+/// including support for vector operations through the SQLite vectorization extension.
+///
+/// Example usage:
+///
+/// ```swift
+/// import SQLiteVec
+///
+/// // initialize the library first
+/// try SQLiteVec.initialize()
+///
+/// // example data
+/// let data: [(index: Int, vector: [Float])] = [
+///     (1, [0.1, 0.1, 0.1, 0.1]),
+///     (2, [0.2, 0.2, 0.2, 0.2]),
+///     (3, [0.3, 0.3, 0.3, 0.3]),
+///     (4, [0.4, 0.4, 0.4, 0.4]),
+///     (5, [0.5, 0.5, 0.5, 0.5]),
+/// ]
+/// let query: [Float] = [0.3, 0.3, 0.3, 0.3]
+///
+/// // create a database
+/// let db = try Database(.inMemory)
+///
+/// // create a table and insert data
+/// try await db.execute("CREATE VIRTUAL TABLE vec_items USING vec0(embedding float[4])")
+/// for row in data {
+///     try await db.execute(
+///         """
+///             INSERT INTO vec_items(rowid, embedding)
+///             VALUES (?, ?)
+///         """,
+///         params: [row.index, row.vector]
+///     )
+/// }
+///
+/// // query the embeddings
+/// let result = try await db.query(
+///     """
+///         SELECT rowid, distance
+///         FROM vec_items
+///         WHERE embedding MATCH ?
+///         ORDER BY distance
+///         LIMIT 3
+///     """,
+///     params: [query]
+/// )
+///
+/// // print the result
+/// print(result)
+/// ```
+///
+/// It should print the following result:
+///
+/// ```bash
+/// [
+///     ["distance": 0.0, "rowid": 3],
+///     ["distance": 0.19999998807907104, "rowid": 4],
+///     ["distance": 0.20000001788139343, "rowid": 2]
+/// ]
+/// ```
+///
+/// This class provides methods for database operations such as executing SQL statements,
+/// querying data, and accessing information about the SQLite vectorization extension.
 public actor Database {
     private var _handle: OpaquePointer?
 
+    /// Initializes a new Database instance.
+    ///
+    /// This initializer creates a new Database instance, opening or creating a SQLite database
+    /// at the specified location with the given access mode.
+    ///
+    /// - Parameters:
+    ///   - location: The location of the database. Defaults to `.inMemory`.
+    ///   - readonly: A boolean indicating whether the database should be opened in read-only mode.
+    ///               Defaults to `false`.
+    ///
+    /// - Throws: An error if the database cannot be opened or created.
+    ///
+    /// - Note: The database is opened with the SQLITE_OPEN_FULLMUTEX and SQLITE_OPEN_URI flags
+    ///         in addition to the flags determined by the `readonly` parameter.
     public init(_ location: Location = .inMemory, readonly: Bool = false) throws {
         let flags = readonly ? SQLITE_OPEN_READONLY : (SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE)
         try SQLiteVecError.check(
@@ -16,6 +96,13 @@ public actor Database {
         )
     }
 
+    /// Returns the version of the SQLite vectorization extension.
+    ///
+    /// This function queries the database to retrieve the version of the SQLite vectorization extension.
+    ///
+    /// - Returns: A string containing the version information, or `nil` if the version couldn't be retrieved.
+    ///
+    /// - Note: This function catches any errors internally and returns `nil` in case of failure.
     public func version() -> String? {
         do {
             let result = try query("SELECT vec_version() as version")
@@ -28,6 +115,13 @@ public actor Database {
         }
     }
 
+    /// Returns build information about the SQLite vectorization extension.
+    ///
+    /// This function queries the database to retrieve debug information about the SQLite vectorization extension.
+    ///
+    /// - Returns: A string containing the build information, or `nil` if the information couldn't be retrieved.
+    ///
+    /// - Note: This function catches any errors internally and returns `nil` in case of failure.
     public func buildInfo() -> String? {
         do {
             let result = try query("SELECT vec_debug() as info")
@@ -40,11 +134,37 @@ public actor Database {
         }
     }
 
+    /// Executes a SQL statement.
+    ///
+    /// This function prepares and executes a SQL statement with optional parameters.
+    ///
+    /// - Parameters:
+    ///   - sql: A string containing the SQL statement to execute.
+    ///   - params: An array of parameters to bind to the SQL statement. Defaults to an empty array.
+    ///
+    /// - Throws: An error if the SQL statement preparation or execution fails.
+    ///
+    /// - Note: This function internally prepares the statement, binds the parameters, and then executes it.
     public func execute(_ sql: String, params: [Any] = []) throws {
         let stmt = try prepare(sql, params: params)
         try execute(stmt)
     }
 
+    /// Executes a SQL query and returns the result as an array of dictionaries.
+    ///
+    /// This function prepares and executes a SQL query with optional parameters and returns the result set.
+    ///
+    /// - Parameters:
+    ///   - sql: A string containing the SQL query to execute.
+    ///   - params: An array of parameters to bind to the SQL query. Defaults to an empty array.
+    ///
+    /// - Returns: An array of dictionaries, where each dictionary represents a row in the result set.
+    ///            The keys in the dictionary are column names, and the values are the corresponding data.
+    ///
+    /// - Throws: An error if the SQL query preparation or execution fails.
+    ///
+    /// - Note: This function internally prepares the statement, binds the parameters, and then executes it.
+    ///         The result is fetched and returned as an array of dictionaries for easy manipulation.
     public func query(_ sql: String, params: [Any] = []) throws -> [[String: Any]] {
         let stmt = try prepare(sql, params: params)
         return query(stmt)
