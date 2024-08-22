@@ -15,7 +15,7 @@ The [Swift Package Manager](https://www.swift.org/documentation/package-manager/
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/jkrukowski/SQLiteVec", from: "0.0.5")
+    .package(url: "https://github.com/jkrukowski/SQLiteVec", from: "0.0.6")
 ]
 ```
 
