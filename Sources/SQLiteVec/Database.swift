@@ -134,6 +134,67 @@ public actor Database {
         }
     }
 
+    /// The identifier of the most recently inserted row.
+    ///
+    /// This property returns the row ID of the last row insert or update operation
+    /// performed by the database connection. If no successful INSERT or UPDATE has been
+    /// performed, or if the most recent INSERT or UPDATE operation failed, this value
+    /// will be 0.
+    ///
+    /// - Note: The value is specific to the current database connection and is not
+    ///         affected by operations in other threads or processes.
+    ///
+    /// - Returns: An `Int` representing the row ID of the last inserted row.
+    public var lastInsertRowId: Int {
+        Int(sqlite3_last_insert_rowid(_handle))
+    }
+
+    /// The number of rows modified by the most recent SQL statement.
+    ///
+    /// This property returns the number of database rows that were changed, inserted, or deleted
+    /// by the most recently completed SQL statement. It only counts changes made by INSERT, UPDATE,
+    /// or DELETE statements. Other SQL statements that don't modify rows (like SELECT) do not
+    /// affect this count.
+    ///
+    /// - Note: The count returned by this property is specific to the current database connection
+    ///         and is not affected by operations in other threads or processes.
+    ///
+    /// - Returns: An `Int` representing the number of rows affected by the last SQL statement.
+    public var modifiedRowsCount: Int {
+        Int(sqlite3_changes64(_handle))
+    }
+
+    /// Executes a transaction with the specified mode.
+    ///
+    /// This function allows you to perform multiple database operations within a single transaction.
+    /// If any operation within the transaction fails, all changes are rolled back.
+    ///
+    /// - Parameters:
+    ///   - mode: The transaction mode to use. Defaults to `.deferred`.
+    ///   - block: A closure containing the database operations to perform within the transaction.
+    ///
+    /// - Throws: An error if any operation within the transaction fails, or if the transaction itself fails to begin or commit.
+    ///
+    /// - Note: If an error occurs during the transaction, all changes are automatically rolled back before the error is thrown.
+    ///
+    /// Example usage:
+    /// ```swift
+    /// try await db.transaction {
+    ///     try await db.execute("INSERT INTO users (name) VALUES (?)", params: ["Alice"])
+    ///     try await db.execute("UPDATE accounts SET balance = balance - 100 WHERE user_id = ?", params: [1])
+    /// }
+    /// ```
+    public func transaction(_ mode: TransactionMode = .deferred, block: () async throws -> Void) async throws {
+        try execute("BEGIN \(mode.rawValue) TRANSACTION")
+        do {
+            try await block()
+            try execute("COMMIT TRANSACTION")
+        } catch {
+            try execute("ROLLBACK TRANSACTION")
+            throw error
+        }
+    }
+
     /// Executes a SQL statement.
     ///
     /// This function prepares and executes a SQL statement with optional parameters.
@@ -142,12 +203,17 @@ public actor Database {
     ///   - sql: A string containing the SQL statement to execute.
     ///   - params: An array of parameters to bind to the SQL statement. Defaults to an empty array.
     ///
+    /// - Returns: An `Int` representing the number of rows modified by the SQL statement.
+    ///
     /// - Throws: An error if the SQL statement preparation or execution fails.
     ///
     /// - Note: This function internally prepares the statement, binds the parameters, and then executes it.
-    public func execute(_ sql: String, params: [Any] = []) throws {
+    ///         It returns the number of rows affected by the statement, which can be useful for INSERT, UPDATE, or DELETE operations.
+    @discardableResult
+    public func execute(_ sql: String, params: [Any] = []) throws -> Int {
         let stmt = try prepare(sql, params: params)
         try execute(stmt)
+        return modifiedRowsCount
     }
 
     /// Executes a SQL query and returns the result as an array of dictionaries.
@@ -293,5 +359,19 @@ public extension Database {
                 uri
             }
         }
+    }
+}
+
+public extension Database {
+    /// The mode in which a transaction acquires a lock.
+    enum TransactionMode: String {
+        /// Defers locking the database till the first read/write executes.
+        case deferred = "DEFERRED"
+
+        /// Immediately acquires a reserved lock on the database.
+        case immediate = "IMMEDIATE"
+
+        /// Immediately acquires an exclusive lock on all databases.
+        case exclusive = "EXCLUSIVE"
     }
 }
