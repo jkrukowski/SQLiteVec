@@ -16,7 +16,7 @@ Random sentences are taken from [here](https://www.kaggle.com/datasets/nikitrick
 
 ### iOS
 
-![](videos/ios.mp4)
+![](videos/ios.mov)
 
 ### macOS
 
