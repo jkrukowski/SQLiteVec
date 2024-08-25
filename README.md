@@ -84,6 +84,10 @@ It should print the following result:
 ]
 ```
 
+## Examples
+
+You can find more examples in the [examples](examples) directory.
+
 ## Testing
 
 ```bash
