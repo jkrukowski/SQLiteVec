@@ -68,7 +68,7 @@ import Foundation
 /// This class provides methods for database operations such as executing SQL statements,
 /// querying data, and accessing information about the SQLite vectorization extension.
 public actor Database {
-    private var _handle: OpaquePointer?
+    private let handler: Handler
 
     /// Initializes a new Database instance.
     ///
@@ -86,14 +86,19 @@ public actor Database {
     ///         in addition to the flags determined by the `readonly` parameter.
     public init(_ location: Location = .inMemory, readonly: Bool = false) throws {
         let flags = readonly ? SQLITE_OPEN_READONLY : (SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE)
+        var handle: OpaquePointer?
         try SQLiteVecError.check(
             sqlite3_open_v2(
                 location.description,
-                &_handle,
+                &handle,
                 flags | SQLITE_OPEN_FULLMUTEX | SQLITE_OPEN_URI,
                 nil
             )
         )
+        guard let handle else {
+            fatalError("Couldn't initialize database handler")
+        }
+        handler = Handler(handle: handle)
     }
 
     /// Returns the version of the SQLite vectorization extension.
@@ -146,7 +151,7 @@ public actor Database {
     ///
     /// - Returns: An `Int` representing the row ID of the last inserted row.
     public var lastInsertRowId: Int {
-        Int(sqlite3_last_insert_rowid(_handle))
+        Int(sqlite3_last_insert_rowid(handler.handle))
     }
 
     /// The number of rows modified by the most recent SQL statement.
@@ -161,7 +166,7 @@ public actor Database {
     ///
     /// - Returns: An `Int` representing the number of rows affected by the last SQL statement.
     public var modifiedRowsCount: Int {
-        Int(sqlite3_changes64(_handle))
+        Int(sqlite3_changes64(handler.handle))
     }
 
     /// Executes a transaction with the specified mode.
@@ -239,8 +244,8 @@ public actor Database {
     private func prepare(_ sql: String, params: [Any]) throws -> OpaquePointer {
         var stmt: OpaquePointer?
         try SQLiteVecError.check(
-            sqlite3_prepare_v2(_handle, sql, -1, &stmt, nil),
-            _handle
+            sqlite3_prepare_v2(handler.handle, sql, -1, &stmt, nil),
+            handler.handle
         )
         let paramCount = Int(sqlite3_bind_parameter_count(stmt))
         guard paramCount == params.count else {
@@ -265,7 +270,7 @@ public actor Database {
             default:
                 result = sqlite3_bind_null(stmt, Int32(index + 1))
             }
-            try SQLiteVecError.check(result, _handle)
+            try SQLiteVecError.check(result, handler.handle)
         }
         return stmt!
     }
@@ -323,10 +328,6 @@ public actor Database {
             return String(cString: UnsafePointer(sqlite3_column_text(stmt, index)))
         }
     }
-
-    deinit {
-        sqlite3_close(_handle)
-    }
 }
 
 public extension Database {
@@ -373,5 +374,19 @@ public extension Database {
 
         /// Immediately acquires an exclusive lock on all databases.
         case exclusive = "EXCLUSIVE"
+    }
+}
+
+extension Database {
+    final class Handler {
+        let handle: OpaquePointer
+
+        init(handle: OpaquePointer) {
+            self.handle = handle
+        }
+
+        deinit {
+            sqlite3_close(handle)
+        }
     }
 }

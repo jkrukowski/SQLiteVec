@@ -34,12 +34,11 @@ extension SQLiteVecError {
         if successCodes.contains(code) {
             return
         }
-        let message: String? =
-            if let handle {
-                String(cString: sqlite3_errmsg(handle))
-            } else {
-                nil
-            }
+        let message: String? = if let handle {
+            String(cString: sqlite3_errmsg(handle))
+        } else {
+            nil
+        }
         throw SQLiteVecError(code: code, message: message)
     }
 

@@ -2,7 +2,7 @@ import Foundation
 import SQLiteVec
 
 @main
-struct CLI {
+enum CLI {
     static func main() async throws {
         try SQLiteVec.initialize()
         let data: [(index: Int, vector: [Float])] = [
