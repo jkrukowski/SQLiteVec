@@ -34,11 +34,12 @@ extension SQLiteVecError {
         if successCodes.contains(code) {
             return
         }
-        let message: String? = if let handle {
-            String(cString: sqlite3_errmsg(handle))
-        } else {
-            nil
-        }
+        let message: String? =
+            if let handle {
+                String(cString: sqlite3_errmsg(handle))
+            } else {
+                nil
+            }
         throw SQLiteVecError(code: code, message: message)
     }
 
@@ -53,15 +54,15 @@ extension Data {
     }
 }
 
-public extension Data {
-    func toArray<Element>() -> [Element] {
+extension Data {
+    public func toArray<Element>() -> [Element] {
         withUnsafeBytes { (pointer: UnsafeRawBufferPointer) -> [Element] in
             let buffer = pointer.bindMemory(to: Element.self)
             return [Element](buffer)
         }
     }
 
-    func toElement<Element>() -> Element {
+    public func toElement<Element>() -> Element {
         withUnsafeBytes { (pointer: UnsafeRawBufferPointer) -> Element in
             pointer.load(as: Element.self)
         }

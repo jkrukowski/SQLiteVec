@@ -100,6 +100,14 @@ To test it on docker swift image run:
 $ docker build -f Dockerfile -t linuxbuild . && docker run linuxbuild
 ```
 
+## Code Formatting
+
+This project uses [swift-format](https://github.com/swiftlang/swift-format). To format the code run:
+
+```bash
+swift format . -i -r --configuration .swift-format
+```
+
 ## Acknowledgements
 
 This project is based on and uses some of the code from:

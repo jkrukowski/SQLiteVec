@@ -1,4 +1,5 @@
 import XCTest
+
 @testable import SQLiteVec
 
 final class CoreTests: XCTestCase {

@@ -35,9 +35,12 @@ struct ContentView: View {
                                     ForEach(viewModel.searchResult) { item in
                                         VStack(alignment: .leading) {
                                             Text(item.text)
-                                            Text(item.distance, format: .number.precision(.fractionLength(2)))
-                                                .font(.footnote)
-                                                .foregroundStyle(.gray)
+                                            Text(
+                                                item.distance,
+                                                format: .number.precision(.fractionLength(2))
+                                            )
+                                            .font(.footnote)
+                                            .foregroundStyle(.gray)
                                         }
                                         .padding([.top, .leading, .trailing])
                                     }

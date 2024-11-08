@@ -189,7 +189,10 @@ public actor Database {
     ///     try await db.execute("UPDATE accounts SET balance = balance - 100 WHERE user_id = ?", params: [1])
     /// }
     /// ```
-    public func transaction(_ mode: TransactionMode = .deferred, block: () async throws -> Void) async throws {
+    public func transaction(
+        _ mode: TransactionMode = .deferred,
+        block: () async throws -> Void
+    ) async throws {
         try execute("BEGIN \(mode.rawValue) TRANSACTION")
         do {
             try await block()
@@ -236,7 +239,10 @@ public actor Database {
     ///
     /// - Note: This function internally prepares the statement, binds the parameters, and then executes it.
     ///         The result is fetched and returned as an array of dictionaries for easy manipulation.
-    public func query(_ sql: String, params: [any Sendable] = []) throws -> [[String: any Sendable]] {
+    public func query(
+        _ sql: String,
+        params: [any Sendable] = []
+    ) throws -> [[String: any Sendable]] {
         let stmt = try prepare(sql, params: params)
         return query(stmt)
     }
@@ -249,7 +255,9 @@ public actor Database {
         )
         let paramCount = Int(sqlite3_bind_parameter_count(stmt))
         guard paramCount == params.count else {
-            fatalError("Failed to bind parameters, counts did not match, sql: \(paramCount), parameters: \(params.count)")
+            fatalError(
+                "Failed to bind parameters, counts did not match, sql: \(paramCount), parameters: \(params.count)"
+            )
         }
         for (index, param) in params.enumerated() {
             let result: Int32
@@ -258,7 +266,8 @@ public actor Database {
                 result = sqlite3_bind_text(stmt, Int32(index + 1), value, -1, SQLITE_TRANSIENT)
             case let value as Data:
                 let bytes = value.bytes
-                result = sqlite3_bind_blob(stmt, Int32(index + 1), bytes, Int32(bytes.count), SQLITE_TRANSIENT)
+                result = sqlite3_bind_blob(
+                    stmt, Int32(index + 1), bytes, Int32(bytes.count), SQLITE_TRANSIENT)
             case let value as Bool:
                 result = sqlite3_bind_int(stmt, Int32(index + 1), value ? 1 : 0)
             case let value as Double:
@@ -266,7 +275,9 @@ public actor Database {
             case let value as Int:
                 result = sqlite3_bind_int(stmt, Int32(index + 1), Int32(value))
             case let value as [Float]:
-                result = sqlite3_bind_blob(stmt, Int32(index + 1), value, Int32(MemoryLayout<Float>.stride * value.count), SQLITE_STATIC)
+                result = sqlite3_bind_blob(
+                    stmt, Int32(index + 1), value, Int32(MemoryLayout<Float>.stride * value.count),
+                    SQLITE_STATIC)
             default:
                 result = sqlite3_bind_null(stmt, Int32(index + 1))
             }
@@ -289,7 +300,7 @@ public actor Database {
                 let columnCount = sqlite3_column_count(stmt)
                 var names = [String]()
                 var types = [Int32]()
-                for index in 0 ..< columnCount {
+                for index in 0..<columnCount {
                     names.append(String(cString: sqlite3_column_name(stmt, index)))
                     types.append(sqlite3_column_type(stmt, index))
                 }
@@ -330,9 +341,9 @@ public actor Database {
     }
 }
 
-public extension Database {
+extension Database {
     /// The location of a SQLite database.
-    enum Location {
+    public enum Location {
         /// An in-memory database (equivalent to `.uri(":memory:")`).
         ///
         /// See: <https://www.sqlite.org/inmemorydb.html#sharedmemdb>
@@ -363,9 +374,9 @@ public extension Database {
     }
 }
 
-public extension Database {
+extension Database {
     /// The mode in which a transaction acquires a lock.
-    enum TransactionMode: String {
+    public enum TransactionMode: String {
         /// Defers locking the database till the first read/write executes.
         case deferred = "DEFERRED"
 

@@ -1,4 +1,5 @@
 import XCTest
+
 @testable import SQLiteVec
 
 final class DatabaseTests: XCTestCase {
@@ -19,7 +20,8 @@ final class DatabaseTests: XCTestCase {
 
     func testSimpleQuery() async throws {
         let db = try Database(.inMemory)
-        try await db.execute("""
+        try await db.execute(
+            """
             CREATE TABLE users (
                 id INTEGER PRIMARY KEY,
                 name TEXT NOT NULL UNIQUE
@@ -38,7 +40,8 @@ final class DatabaseTests: XCTestCase {
 
     func testSubQuery() async throws {
         let db = try Database(.inMemory)
-        try await db.execute("""
+        try await db.execute(
+            """
             CREATE TABLE users (
                 id INTEGER PRIMARY KEY,
                 name TEXT NOT NULL UNIQUE

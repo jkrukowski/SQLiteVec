@@ -7,8 +7,8 @@
 
 import Dependencies
 import Foundation
-import Observation
 import OSLog
+import Observation
 import SwiftUI
 
 let logger = Logger()

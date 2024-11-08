@@ -29,16 +29,16 @@ let package = Package(
         .executableTarget(
             name: "SQLiteVecCLI",
             dependencies: [
-                "SQLiteVec",
+                "SQLiteVec"
             ]
         ),
         .target(
             name: "SQLiteVec",
             dependencies: [
-                "CSQLiteVec",
+                "CSQLiteVec"
             ],
             swiftSettings: [
-                .enableExperimentalFeature("StrictConcurrency"),
+                .enableExperimentalFeature("StrictConcurrency")
             ]
         ),
         .target(
@@ -48,7 +48,7 @@ let package = Package(
         .testTarget(
             name: "SQLiteVecTests",
             dependencies: [
-                "SQLiteVec",
+                "SQLiteVec"
             ]
         ),
     ]
