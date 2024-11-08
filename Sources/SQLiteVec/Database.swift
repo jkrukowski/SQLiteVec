@@ -215,7 +215,7 @@ public actor Database {
     /// - Note: This function internally prepares the statement, binds the parameters, and then executes it.
     ///         It returns the number of rows affected by the statement, which can be useful for INSERT, UPDATE, or DELETE operations.
     @discardableResult
-    public func execute(_ sql: String, params: [Any] = []) throws -> Int {
+    public func execute(_ sql: String, params: [any Sendable] = []) throws -> Int {
         let stmt = try prepare(sql, params: params)
         try execute(stmt)
         return modifiedRowsCount
@@ -236,12 +236,12 @@ public actor Database {
     ///
     /// - Note: This function internally prepares the statement, binds the parameters, and then executes it.
     ///         The result is fetched and returned as an array of dictionaries for easy manipulation.
-    public func query(_ sql: String, params: [Any] = []) throws -> [[String: Any]] {
+    public func query(_ sql: String, params: [any Sendable] = []) throws -> [[String: any Sendable]] {
         let stmt = try prepare(sql, params: params)
         return query(stmt)
     }
 
-    private func prepare(_ sql: String, params: [Any]) throws -> OpaquePointer {
+    private func prepare(_ sql: String, params: [any Sendable]) throws -> OpaquePointer {
         var stmt: OpaquePointer?
         try SQLiteVecError.check(
             sqlite3_prepare_v2(handler.handle, sql, -1, &stmt, nil),
@@ -280,9 +280,9 @@ public actor Database {
         try SQLiteVecError.check(sqlite3_step(stmt))
     }
 
-    private func query(_ stmt: OpaquePointer) -> [[String: Any]] {
+    private func query(_ stmt: OpaquePointer) -> [[String: any Sendable]] {
         defer { sqlite3_finalize(stmt) }
-        var rows = [[String: Any]]()
+        var rows = [[String: any Sendable]]()
         var columnInfo: (names: [String], types: [Int32])?
         while sqlite3_step(stmt) == SQLITE_ROW {
             if columnInfo == nil {
@@ -296,7 +296,7 @@ public actor Database {
                 columnInfo = (names, types)
             }
             if let columnInfo {
-                var row = [String: Any]()
+                var row = [String: any Sendable]()
                 for (index, value) in zip(columnInfo.names, columnInfo.types).enumerated() {
                     let (name, type) = value
                     if let value = columnValue(index: Int32(index), type: type, stmt: stmt) {
@@ -309,7 +309,7 @@ public actor Database {
         return rows
     }
 
-    private func columnValue(index: Int32, type: Int32, stmt: OpaquePointer) -> Any? {
+    private func columnValue(index: Int32, type: Int32, stmt: OpaquePointer) -> (any Sendable)? {
         switch type {
         case SQLITE_INTEGER:
             return Int(sqlite3_column_int64(stmt, index))

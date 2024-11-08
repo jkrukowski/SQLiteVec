@@ -94,7 +94,7 @@ struct QueryResult: Hashable, Identifiable {
 }
 
 extension QueryResult {
-    init?(_ result: [String: Any]) {
+    init?(_ result: [String: any Sendable]) {
         guard let id = result["id"] as? Int else {
             return nil
         }

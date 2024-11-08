@@ -63,7 +63,7 @@ actor EmbeddingDatabase {
         )
     }
 
-    func querySimilar(to text: String, k: Int = 5) async throws -> [[String: Any]] {
+    func querySimilar(to text: String, k: Int = 5) async throws -> [[String: any Sendable]] {
         guard let vector = embeddingProvider.vector(for: text) else {
             throw EmbeddingDatabase.Error.cannotCreateVector
         }
