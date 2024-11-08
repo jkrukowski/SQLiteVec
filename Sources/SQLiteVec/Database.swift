@@ -244,7 +244,7 @@ public actor Database {
         params: [any Sendable] = []
     ) throws -> [[String: any Sendable]] {
         let stmt = try prepare(sql, params: params)
-        return query(stmt)
+        return try query(stmt)
     }
 
     private func prepare(_ sql: String, params: [any Sendable]) throws -> OpaquePointer {
@@ -278,6 +278,14 @@ public actor Database {
                 result = sqlite3_bind_blob(
                     stmt, Int32(index + 1), value, Int32(MemoryLayout<Float>.stride * value.count),
                     SQLITE_STATIC)
+            case let value as [Int8]:
+                result = sqlite3_bind_blob(
+                    stmt, Int32(index + 1), value, Int32(MemoryLayout<Int8>.stride * value.count),
+                    SQLITE_STATIC)
+            case let value as [Bool]:
+                result = sqlite3_bind_blob(
+                    stmt, Int32(index + 1), value, Int32(MemoryLayout<Bool>.stride * value.count),
+                    SQLITE_STATIC)
             default:
                 result = sqlite3_bind_null(stmt, Int32(index + 1))
             }
@@ -291,11 +299,16 @@ public actor Database {
         try SQLiteVecError.check(sqlite3_step(stmt))
     }
 
-    private func query(_ stmt: OpaquePointer) -> [[String: any Sendable]] {
+    private func query(_ stmt: OpaquePointer) throws -> [[String: any Sendable]] {
         defer { sqlite3_finalize(stmt) }
         var rows = [[String: any Sendable]]()
         var columnInfo: (names: [String], types: [Int32])?
-        while sqlite3_step(stmt) == SQLITE_ROW {
+        while true {
+            let result = sqlite3_step(stmt)
+            try SQLiteVecError.check(result, handler.handle)
+            if result != SQLITE_ROW {
+                break
+            }
             if columnInfo == nil {
                 let columnCount = sqlite3_column_count(stmt)
                 var names = [String]()

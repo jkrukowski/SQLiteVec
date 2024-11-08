@@ -79,7 +79,46 @@ final class DatabaseTests: XCTestCase {
         XCTAssertEqual(data.bytes, [212])
     }
 
-    func testVectorAdd() async throws {
+    func testVectorInit() async throws {
+        let db = try Database(.inMemory)
+        let result1 = try await db.query(
+            """
+                SELECT vec_int8(?) as result
+            """,
+            params: [
+                [0, 1, 2, 3, 4] as [Int8]
+            ]
+        )
+        let data1 = try XCTUnwrap(result1[0]["result"] as? Data)
+        let array1: [Int8] = data1.toArray()
+        XCTAssertEqual(array1, [0, 1, 2, 3, 4])
+
+        let result2 = try await db.query(
+            """
+                SELECT vec_bit(?) as result
+            """,
+            params: [
+                [false, false, false, true, true] as [Bool]
+            ]
+        )
+        let data2 = try XCTUnwrap(result2[0]["result"] as? Data)
+        let array2: [Bool] = data2.toArray()
+        XCTAssertEqual(array2, [false, false, false, true, true])
+
+        let result3 = try await db.query(
+            """
+                SELECT vec_f32(?) as result
+            """,
+            params: [
+                [0, 1, 2, 3, 4] as [Float]
+            ]
+        )
+        let data3 = try XCTUnwrap(result3[0]["result"] as? Data)
+        let array3: [Float] = data3.toArray()
+        XCTAssertEqual(array3, [0, 1, 2, 3, 4], accuracy: Float(accuracy))
+    }
+
+    func testVectorAddFloat() async throws {
         let db = try Database(.inMemory)
         let result = try await db.query(
             """
@@ -99,7 +138,24 @@ final class DatabaseTests: XCTestCase {
         )
     }
 
-    func testVectorSub() async throws {
+    func testVectorAddInt8() async throws {
+        let db = try Database(.inMemory)
+        let result = try await db.query(
+            """
+                SELECT vec_add(vec_int8(?), vec_int8(?)) as result
+            """,
+            params: [
+                [0, 1, 2, 3] as [Int8],
+                [5, 6, 7, 8] as [Int8],
+            ]
+        )
+        XCTAssertEqual(result.count, 1)
+        let data = try XCTUnwrap(result[0]["result"] as? Data)
+        let array: [Int8] = data.toArray()
+        XCTAssertEqual(array, [5, 7, 9, 11])
+    }
+
+    func testVectorSubFloat() async throws {
         let db = try Database(.inMemory)
         let result = try await db.query(
             """
@@ -117,6 +173,23 @@ final class DatabaseTests: XCTestCase {
             array, [-1.7, -0.06999999, -0.67, -0.62, 0.56, 0.62, 1.03, 0.85],
             accuracy: Float(accuracy)
         )
+    }
+
+    func testVectorSubInt8() async throws {
+        let db = try Database(.inMemory)
+        let result = try await db.query(
+            """
+                SELECT vec_sub(vec_int8(?), vec_int8(?)) as result
+            """,
+            params: [
+                [0, 1, 2, 3] as [Int8],
+                [9, 3, 8, 0] as [Int8],
+            ]
+        )
+        XCTAssertEqual(result.count, 1)
+        let data = try XCTUnwrap(result[0]["result"] as? Data)
+        let array: [Int8] = data.toArray()
+        XCTAssertEqual(array, [-9, -2, -6, 3])
     }
 
     func testEmbeddingDistanceQuery() async throws {
