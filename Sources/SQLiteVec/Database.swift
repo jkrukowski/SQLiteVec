@@ -349,7 +349,19 @@ public actor Database {
         case SQLITE_NULL:
             return nil
         default:
-            return String(cString: UnsafePointer(sqlite3_column_text(stmt, index)))
+            // NULL-safe: `sqlite3_column_text` returns nil when the cell is
+            // genuinely NULL. This branch is reached (instead of the
+            // `SQLITE_NULL` case above) whenever `type` was captured from a
+            // *different* row's column value than the one being read — because
+            // `query(_:)` caches `columnInfo.types` from the first row and
+            // reuses them for the rest. On a nullable TEXT column where row 1
+            // has a value and a later row is NULL, we land here with
+            // `type == SQLITE_TEXT` but a NULL cell. Force-unwrapping via
+            // `UnsafePointer(nil!)` would then trap. Return nil to match the
+            // `SQLITE_NULL` case's semantics — the caller sees the key absent
+            // from the row dictionary, which is what NULL means.
+            guard let ptr = sqlite3_column_text(stmt, index) else { return nil }
+            return String(cString: ptr)
         }
     }
 }

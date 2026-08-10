@@ -231,4 +231,66 @@ final class DatabaseTests: XCTestCase {
         XCTAssertEqual(result[2]["distance"] as! Double, 0.2000000, accuracy: accuracy)
         XCTAssertEqual(result[2]["rowid"] as? Int, 2)
     }
+
+    /// A nullable TEXT column where the *first row* has a value and a *later
+    /// row* is NULL used to crash `query(_:)` with an implicit-nil-unwrap trap.
+    /// Column types are captured once from the first row and reused for the
+    /// rest, so the NULL cell was dispatched into `columnValue`'s `default:`
+    /// branch (as SQLITE_TEXT) rather than `case SQLITE_NULL:`. The default
+    /// branch force-unwrapped `sqlite3_column_text`, which returns nil for a
+    /// genuinely-NULL cell — trap.
+    ///
+    /// The fix returns nil for that case, matching the `SQLITE_NULL` case's
+    /// semantics: the row dictionary simply omits the key.
+    func testNullableTextColumnAcrossRowsDoesNotCrash() async throws {
+        let db = try Database(.inMemory)
+        try await db.execute(
+            """
+            CREATE TABLE items (
+                id INTEGER PRIMARY KEY,
+                label TEXT
+            )
+            """
+        )
+        try await db.execute("INSERT INTO items(id, label) VALUES (?, ?)", params: [1, "first"])
+        try await db.execute("INSERT INTO items(id, label) VALUES (?, ?)", params: [2, NSNull()])
+
+        let result = try await db.query("SELECT id, label FROM items ORDER BY id")
+
+        XCTAssertEqual(result.count, 2)
+        XCTAssertEqual(result[0]["id"] as? Int, 1)
+        XCTAssertEqual(result[0]["label"] as? String, "first")
+        XCTAssertEqual(result[1]["id"] as? Int, 2)
+        // NULL cell: the key is absent from the row dictionary — same semantics
+        // as `case SQLITE_NULL:` in `columnValue`. Not empty-string, not a
+        // present NSNull.
+        XCTAssertNil(result[1]["label"])
+    }
+
+    /// The reverse shape: first row is NULL, second row has a value.
+    /// This shape does not crash today (type captured as SQLITE_NULL sends the
+    /// value row through `case SQLITE_NULL:` returning nil, losing the value —
+    /// a distinct bug, but not the one this fix targets). Locked in so the
+    /// null-safety fix does not regress the existing behaviour.
+    func testNullFirstRowLosesValueInSecondRow() async throws {
+        let db = try Database(.inMemory)
+        try await db.execute(
+            """
+            CREATE TABLE items (
+                id INTEGER PRIMARY KEY,
+                label TEXT
+            )
+            """
+        )
+        try await db.execute("INSERT INTO items(id, label) VALUES (?, ?)", params: [1, NSNull()])
+        try await db.execute("INSERT INTO items(id, label) VALUES (?, ?)", params: [2, "second"])
+
+        let result = try await db.query("SELECT id, label FROM items ORDER BY id")
+
+        XCTAssertEqual(result.count, 2)
+        XCTAssertNil(result[0]["label"])
+        // Documents the pre-existing type-caching behavior: the second row's
+        // value is dropped because the first row's SQLITE_NULL type is reused.
+        XCTAssertNil(result[1]["label"])
+    }
 }
