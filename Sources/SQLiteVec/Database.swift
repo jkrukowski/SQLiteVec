@@ -302,28 +302,25 @@ public actor Database {
     private func query(_ stmt: OpaquePointer) throws -> [[String: any Sendable]] {
         defer { sqlite3_finalize(stmt) }
         var rows = [[String: any Sendable]]()
-        var columnInfo: (names: [String], types: [Int32])?
+        var columnNames: [String]?
         while true {
             let result = sqlite3_step(stmt)
             try SQLiteVecError.check(result, handler.handle)
             if result != SQLITE_ROW {
                 break
             }
-            if columnInfo == nil {
+            if columnNames == nil {
                 let columnCount = sqlite3_column_count(stmt)
                 var names = [String]()
-                var types = [Int32]()
                 for index in 0..<columnCount {
                     names.append(String(cString: sqlite3_column_name(stmt, index)))
-                    types.append(sqlite3_column_type(stmt, index))
                 }
-                columnInfo = (names, types)
+                columnNames = names
             }
-            if let columnInfo {
+            if let columnNames {
                 var row = [String: any Sendable]()
-                for (index, value) in zip(columnInfo.names, columnInfo.types).enumerated() {
-                    let (name, type) = value
-                    if let value = columnValue(index: Int32(index), type: type, stmt: stmt) {
+                for (index, name) in columnNames.enumerated() {
+                    if let value = columnValue(index: Int32(index), stmt: stmt) {
                         row[name] = value
                     }
                 }
@@ -333,8 +330,8 @@ public actor Database {
         return rows
     }
 
-    private func columnValue(index: Int32, type: Int32, stmt: OpaquePointer) -> (any Sendable)? {
-        switch type {
+    private func columnValue(index: Int32, stmt: OpaquePointer) -> (any Sendable)? {
+        switch sqlite3_column_type(stmt, index) {
         case SQLITE_INTEGER:
             return Int(sqlite3_column_int64(stmt, index))
         case SQLITE_FLOAT:

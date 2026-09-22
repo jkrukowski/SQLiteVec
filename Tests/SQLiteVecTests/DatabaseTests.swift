@@ -38,6 +38,32 @@ final class DatabaseTests: XCTestCase {
         XCTAssertEqual(result[0]["name"] as? String, "Jane")
     }
 
+    func testNullableTextColumnAcrossRows() async throws {
+        let db = try Database(.inMemory)
+        try await db.execute("CREATE TABLE items (id INTEGER PRIMARY KEY, label TEXT)")
+        try await db.execute("INSERT INTO items (id, label) VALUES (1, 'first'), (2, NULL)")
+
+        let result = try await db.query("SELECT id, label FROM items ORDER BY id")
+
+        XCTAssertEqual(result.count, 2)
+        let first = try XCTUnwrap(result.first)
+        let last = try XCTUnwrap(result.last)
+        XCTAssertEqual(first["id"] as? Int, 1)
+        XCTAssertEqual(first["label"] as? String, "first")
+        XCTAssertEqual(last["id"] as? Int, 2)
+        XCTAssertNil(last["label"])
+
+        let reversed = try await db.query("SELECT id, label FROM items ORDER BY id DESC")
+
+        XCTAssertEqual(reversed.count, 2)
+        let nullFirst = try XCTUnwrap(reversed.first)
+        let textLast = try XCTUnwrap(reversed.last)
+        XCTAssertEqual(nullFirst["id"] as? Int, 2)
+        XCTAssertNil(nullFirst["label"])
+        XCTAssertEqual(textLast["id"] as? Int, 1)
+        XCTAssertEqual(textLast["label"] as? String, "first")
+    }
+
     func testSubQuery() async throws {
         let db = try Database(.inMemory)
         try await db.execute(
