@@ -3,7 +3,7 @@
 # Configurable versions
 SQLITE_VERSION=3510000
 SQLITE_YEAR=2025
-SQLITE_VEC_VERSION=0.1.6
+SQLITE_VEC_VERSION=0.1.9
 
 # download sqlite amalgamation
 
