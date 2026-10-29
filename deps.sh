@@ -12,7 +12,7 @@ unzip -q sqlite-amalgamation.zip
 SQLITE_DIR=$(unzip -l sqlite-amalgamation.zip | grep -m1 "sqlite-amalgamation-" | awk '{print $4}' | cut -d/ -f1)
 cp ${SQLITE_DIR}/sqlite3.c Sources/CSQLiteVec/
 cp ${SQLITE_DIR}/sqlite3.h Sources/CSQLiteVec/include/
-cp ${SQLITE_DIR}/sqlite3ext.h Sources/CSQLiteVec/include/
+cp ${SQLITE_DIR}/sqlite3ext.h Sources/CSQLiteVec/
 rm -rf ${SQLITE_DIR}
 rm sqlite-amalgamation.zip
 
@@ -21,5 +21,5 @@ rm sqlite-amalgamation.zip
 curl -o sqlite-vec-amalgamation.zip -L https://github.com/asg017/sqlite-vec/releases/download/v${SQLITE_VEC_VERSION}/sqlite-vec-${SQLITE_VEC_VERSION}-amalgamation.zip
 unzip -q sqlite-vec-amalgamation.zip
 mv sqlite-vec.c Sources/CSQLiteVec/
-mv sqlite-vec.h Sources/CSQLiteVec/include/
+mv sqlite-vec.h Sources/CSQLiteVec/
 rm sqlite-vec-amalgamation.zip
