@@ -12,11 +12,12 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
 
     steps:
-    - uses: swift-actions/setup-swift@v2
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
+    - name: Show Swift version
+      run: swift --version
     - name: Build
       run: swift build -v
     - name: Test
