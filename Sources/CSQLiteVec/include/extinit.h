@@ -10,6 +10,12 @@ extern "C" {
 
 int core_vec_init();
 
+int sqlite3_vec_init(
+    sqlite3 *db,
+    char **pzErrMsg,
+    const sqlite3_api_routines *pApi
+);
+
 #ifdef __cplusplus
 }  /* end of the 'extern "C"' block */
 #endif
